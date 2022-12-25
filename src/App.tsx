@@ -1,7 +1,13 @@
-import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
+import {
+  FormProvider,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
+  CheckboxField,
   DatePickerField,
   InputSelectField,
   InputTextField,
@@ -25,26 +31,27 @@ const App = () => {
       .nullable()
       .required('Email is required!')
       .email('Email is invalid!'),
-    price: yup
-      .number()
-      .nullable()
-      .transform(value => (!Number.isFinite(value) ? undefined : value))
-      .required('Price is required!'),
+    price: yup.string().nullable().required('Price is required!'),
     selectSong: yup.object().nullable().required('Song is required'),
     linkUrl: yup.string().trim().nullable().matches(patternURL, {
       message: 'Please enter a valid url',
       excludeEmptyString: true,
     }),
-    startDate: yup
-      .date()
-      .required('Start date is required!')
-      .nullable()
-      .max(yup.ref('endDate'), 'End Date must be before the Start Date'),
+    startDate: yup.date().required('Start date is required!').nullable(),
+    isEndDate: yup.boolean(),
     endDate: yup
       .date()
-      .required('End date is required!')
       .nullable()
-      .min(yup.ref('startDate'), 'End Date must be after the Start Date'),
+      .transform((curr, orig) => (orig === '' ? null : curr))
+      .when('isEndDate', {
+        is: (isChecked: boolean) => isChecked,
+        then: yup
+          .date()
+          .nullable()
+          .transform((curr, orig) => (orig === '' ? null : curr))
+          .required('End date is required!')
+          .min(yup.ref('startDate'), 'End Date must be after the Start Date'),
+      }),
     awards: yup.array().of(
       yup.object().shape({
         title: yup.string().trim().required('Title is required!'),
@@ -52,7 +59,6 @@ const App = () => {
     ),
   });
 
-  const context = { path: 'awards' };
   const methods = useForm<FormDataProps>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -64,13 +70,13 @@ const App = () => {
       startDate: null,
       endDate: null,
       linkUrl: '',
+      isEndDate: false,
       awards: [
         {
           title: '',
         },
       ],
     },
-    context,
   });
 
   const { handleSubmit, control, trigger } = methods;
@@ -78,6 +84,11 @@ const App = () => {
   const onSubmit = (data: FormDataProps) => {
     console.log(data);
   };
+
+  const isEndDate = useWatch({
+    control,
+    name: 'isEndDate',
+  });
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -168,15 +179,20 @@ const App = () => {
                 control={control}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <DatePickerField
-                name='endDate'
-                label='End Date'
-                placeholder='Enter end date'
-                control={control}
-                extendOnChange={handleChangeDate}
-              />
+            <Grid item xs={1} md={1}>
+              <CheckboxField control={control} name='isEndDate' />
             </Grid>
+            {isEndDate && (
+              <Grid item xs={11} md={5}>
+                <DatePickerField
+                  name='endDate'
+                  label='End Date'
+                  placeholder='Enter end date'
+                  control={control}
+                  extendOnChange={handleChangeDate}
+                />
+              </Grid>
+            )}
 
             <Grid item container xs={12}>
               {fields.map((field, index) => (

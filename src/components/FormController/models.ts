@@ -31,9 +31,10 @@ export interface InputTextProps extends InputProps {
 }
 
 export interface NumberFormatProps extends InputProps {
-  onNumberChange: (value: number | undefined) => void;
+  onNumberChange: (value: any) => void;
   value?: string;
   prefix?: string;
+  thousandSeparator?: boolean;
 }
 
 export interface SelectFieldProps extends InputProps {

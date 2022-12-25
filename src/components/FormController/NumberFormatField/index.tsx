@@ -29,9 +29,9 @@ const NumberFormatField = <T extends FieldValues>(
           <NumberFormat
             {...rest}
             {...field}
-            onNumberChange={(value: number | undefined) => {
-              field.onChange(value);
-              extendOnChange?.(value);
+            onNumberChange={data => {
+              field.onChange(data);
+              extendOnChange?.(data);
             }}
             errorMessage={error?.message}
           />
